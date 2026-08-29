@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA Weather — Live Atmospheric Dashboard</title>
+    
+    <!-- Lucide Icons CDN for clean, modern SVG UI icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Main CSS Stylesheet -->
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body class="theme-dark">
+    <!-- ========================================================================= -->
+    <!-- 1. CUSTOM MOUSE CURSOR ELEMENT                                            -->
+    <!-- A smooth minimalist dot cursor that tracks pointer movement and adjusts   -->
+    <!-- color dynamically (Black/White contrast) based on theme.                 -->
+    <!-- ========================================================================= -->
+    <div id="custom-cursor" class="custom-cursor"></div>
+    <div id="custom-cursor-follower" class="custom-cursor-follower"></div>
+
+    <!-- ========================================================================= -->
+    <!-- 2. DYNAMIC PROCEDURAL BACKGROUND CANVAS                                   -->
+    <!-- Renders live procedural motion graphics (Sunlight rays, Rain particles,   -->
+    <!-- Floating clouds, Snowfall, Lightning flashes, Fog layers) based on weather -->
+    <!-- ========================================================================= -->
+    <canvas id="weather-canvas" class="weather-canvas"></canvas>
+
+    <!-- Ambient Gradient Shaders for Black/White Dark-Light Shader Aesthetic -->
+    <div class="shader-background-overlay"></div>
+
+    <!-- ========================================================================= -->
+    <!-- 3. STICKY BLUR NAVIGATION BAR                                            -->
+    <!-- Glassmorphism header featuring logo, live search bar, unit switcher,     -->
+    <!-- theme toggle, and diagnostic console trigger button.                      -->
+    <!-- ========================================================================= -->
+    <header class="glass-navbar">
+        <div class="nav-container">
+            <!-- Brand Logo & Name -->
+            <div class="brand-logo" id="brand-logo-btn">
+                <i data-lucide="cloud-sun" class="brand-icon"></i>
+                <span class="brand-title">AURA <small>WEATHER</small></span>
+            </div>
+
+            <!-- Global Search Bar with Auto-Complete Dropdown -->
+            <div class="search-wrapper">
+                <div class="search-input-box">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" id="city-search-input" placeholder="Search city, state, or country worldwide..." autocomplete="off">
+                    <button class="location-btn" id="geo-location-btn" title="Use current GPS location">
+                        <i data-lucide="crosshair"></i>
+                    </button>
+                </div>
+                <!-- Search Auto-Complete Suggestion Box -->
+                <div class="search-dropdown" id="search-dropdown"></div>
+            </div>
+
+            <!-- Header Controls: Unit Switcher, Theme Toggle, Developer Console -->
+            <div class="nav-actions">
+                <!-- Temperature Unit Switcher (°C / °F) -->
+                <button class="pill-btn unit-toggle-btn" id="unit-toggle-btn">
+                    <span id="unit-c-label" class="active-unit">°C</span>
+                    <span class="unit-divider">/</span>
+                    <span id="unit-f-label">°F</span>
+                </button>
+
+                <!-- Theme Toggle Button (Dark Shader / Light Shader) -->
+                <button class="icon-btn theme-toggle-btn" id="theme-toggle-btn" title="Toggle Theme (Dark / Light Shader)">
+                    <i data-lucide="moon" id="theme-icon"></i>
+                </button>
+
+                <!-- Developer Diagnostic Log Button -->
+                <button class="icon-btn dev-console-btn" id="dev-console-btn" title="Developer Diagnostic Log & API Error Inspector">
+                    <i data-lucide="terminal"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========================================================================= -->
+    <!-- 4. LANDING PAGE HERO SECTION                                              -->
+    <!-- Displayed when user opens the app or searches anew. Shows quick prompt   -->
+    <!-- pills and scenario cards for 1-click weather discovery.                  -->
+    <!-- ========================================================================= -->
+    <section class="landing-section" id="landing-section">
+        <div class="landing-content">
+            <div class="landing-badge">
+                <i data-lucide="sparkles"></i> Real-Time Atmospheric Motion & AQI Engine
+            </div>
+            
+            <h1 class="landing-title">
+                Experience Weather <br>
+                <span class="gradient-text">In Fluid Motion</span>
+            </h1>
+            
+            <p class="landing-subtitle">
+                Live ambient shaders, real-time air quality index, hourly trends, and interactive atmospheric graphics for any location on Earth.
+            </p>
+
+            <!-- Quick Start Location Prompt Pills -->
+            <div class="prompt-pills-container">
+                <span class="prompt-label">Quick Prompts:</span>
+                <button class="prompt-pill" data-city="Tokyo">Tokyo 🇯🇵</button>
+                <button class="prompt-pill" data-city="London">London 🇬🇧</button>
+                <button class="prompt-pill" data-city="New York">New York 🇺🇸</button>
+                <button class="prompt-pill" data-city="Paris">Paris 🇫🇷</button>
+                <button class="prompt-pill" data-city="Dubai">Dubai 🇦🇪</button>
+                <button class="prompt-pill" data-city="Sydney">Sydney 🇦🇺</button>
+            </div>
+
+            <!-- Primary CTA Action Button -->
+            <div class="landing-cta-box">
+                <button class="cta-enter-btn" id="enter-dashboard-btn">
+                    <i data-lucide="compass"></i> Launch Weather Dashboard <i data-lucide="arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Scenario Quick Prompt Cards -->
+            <div class="scenario-cards-grid">
+                <div class="scenario-card" data-prompt="current-geo">
+                    <div class="scenario-icon"><i data-lucide="navigation"></i></div>
+                    <div class="scenario-info">
+                        <h3>My Current Location</h3>
+                        <p>Auto-detect weather & real-time air quality where you are right now</p>
+                    </div>
+                    <i data-lucide="arrow-right" class="scenario-arrow"></i>
+                </div>
+
+                <div class="scenario-card" data-prompt="city-beach">
+                    <div class="scenario-icon"><i data-lucide="sun"></i></div>
+                    <div class="scenario-info">
+                        <h3>Beach & Sun Forecast</h3>
+                        <p>Explore high UV index and clear skies in Miami Beach</p>
+                    </div>
+                    <i data-lucide="arrow-right" class="scenario-arrow"></i>
+                </div>
+
+                <div class="scenario-card" data-prompt="city-aqi">
+                    <div class="scenario-icon"><i data-lucide="wind"></i></div>
+                    <div class="scenario-info">
+                        <h3>Air Quality Monitor</h3>
+                        <p>Check real-time PM2.5, PM10, and health AQI in New Delhi</p>
+                    </div>
+                    <i data-lucide="arrow-right" class="scenario-arrow"></i>
+                </div>
+
+                <div class="scenario-card" data-prompt="city-snow">
+                    <div class="scenario-icon"><i data-lucide="snowflake"></i></div>
+                    <div class="scenario-info">
+                        <h3>Alpine Snow & Frost</h3>
+                        <p>View snow motion graphics and freezing temps in Zurich</p>
+                    </div>
+                    <i data-lucide="arrow-right" class="scenario-arrow"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- 5. MAIN WEATHER DASHBOARD GRID SECTION                                   -->
+    <!-- Main weather display with rounded glass cards, smooth scroll reveal,      -->
+    <!-- real-time AQI meter, 24h timeline, 7-day forecast, and atmospheric stats.-->
+    <!-- ========================================================================= -->
+    <main class="dashboard-section hidden" id="dashboard-section">
+        
+        <!-- Loading State Spinner -->
+        <div class="loading-overlay" id="loading-overlay">
+            <div class="spinner-box">
+                <div class="spinner-ring"></div>
+                <span class="loading-text">Fetching Live Atmospheric Data...</span>
+            </div>
+        </div>
+
+        <!-- Dashboard Content Grid -->
+        <div class="dashboard-grid" id="dashboard-grid">
+
+            <!-- CARD 1: HERO CURRENT WEATHER CARD (Glass card with Motion Graphics) -->
+            <div class="glass-card hero-weather-card reveal-on-scroll">
+                <div class="card-header-flex">
+                    <div class="location-details">
+                        <h2 id="weather-city-name">Loading City...</h2>
+                        <span id="weather-country-name" class="country-subtext">Country</span>
+                        <div class="time-badge" id="weather-local-time"><i data-lucide="clock"></i> --:--</div>
+                    </div>
+                    <div class="condition-badge" id="condition-badge">
+                        <span id="weather-condition-text">Clear Sky</span>
+                    </div>
+                </div>
+
+                <div class="hero-temperature-flex">
+                    <div class="main-temp-display">
+                        <span id="main-temperature">--</span>
+                        <span class="temp-unit-symbol" id="main-temp-unit">°C</span>
+                    </div>
+                    
+                    <div class="hero-icon-container" id="hero-icon-container">
+                        <!-- Dynamic Weather Animation SVG / Icon -->
+                        <i data-lucide="sun" class="animated-weather-icon" id="hero-weather-icon"></i>
+                    </div>
+                </div>
+
+                <div class="hero-card-footer">
+                    <div class="stat-pill">
+                        <i data-lucide="thermometer"></i>
+                        <span>Feels like: <strong id="feels-like-temp">--°</strong></span>
+                    </div>
+                    <div class="stat-pill">
+                        <i data-lucide="arrow-up-right"></i>
+                        <span>High: <strong id="hero-high-temp">--°</strong></span>
+                    </div>
+                    <div class="stat-pill">
+                        <i data-lucide="arrow-down-right"></i>
+                        <span>Low: <strong id="hero-low-temp">--°</strong></span>
+                    </div>
+                    <div class="stat-pill">
+                        <i data-lucide="droplets"></i>
+                        <span>Rain: <strong id="hero-rain-chance">0%</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARD 2: REAL-TIME AQI (AIR QUALITY INDEX) CARD -->
+            <div class="glass-card aqi-card reveal-on-scroll">
+                <div class="card-title-flex">
+                    <i data-lucide="activity" class="card-icon"></i>
+                    <h3>Real-Time Air Quality (AQI)</h3>
+                    <span class="aqi-status-pill" id="aqi-status-pill">Good</span>
+                </div>
+
+                <div class="aqi-meter-wrapper">
+                    <div class="aqi-score-display">
+                        <span id="aqi-number">--</span>
+                        <small>US AQI</small>
+                    </div>
+                    <div class="aqi-bar-container">
+                        <div class="aqi-bar-fill" id="aqi-bar-fill"></div>
+                    </div>
+                    <p class="aqi-description" id="aqi-description">
+                        Air quality is satisfactory and poses little or no risk.
+                    </p>
+                </div>
+
+                <div class="pollutant-grid">
+                    <div class="pollutant-item">
+                        <span class="pollutant-label">PM2.5</span>
+                        <span class="pollutant-value" id="pm25-val">-- µg/m³</span>
+                    </div>
+                    <div class="pollutant-item">
+                        <span class="pollutant-label">PM10</span>
+                        <span class="pollutant-value" id="pm10-val">-- µg/m³</span>
+                    </div>
+                    <div class="pollutant-item">
+                        <span class="pollutant-label">NO₂</span>
+                        <span class="pollutant-value" id="no2-val">-- µg/m³</span>
+                    </div>
+                    <div class="pollutant-item">
+                        <span class="pollutant-label">O₃</span>
+                        <span class="pollutant-value" id="o3-val">-- µg/m³</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARD 3: 24-HOUR HOURLY FORECAST SCROLLABLE TIMELINE -->
+            <div class="glass-card hourly-card full-width-card reveal-on-scroll">
+                <div class="card-title-flex">
+                    <i data-lucide="sparkle" class="card-icon"></i>
+                    <h3>24-Hour Atmospheric Forecast</h3>
+                    <span class="sub-label">Hourly Temperature & Weather Trend</span>
+                </div>
+
+                <div class="hourly-scroll-container" id="hourly-scroll-container">
+                    <!-- Hourly item cards populated dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- CARD 4: 7-DAY EXTENDED DAILY FORECAST -->
+            <div class="glass-card daily-card reveal-on-scroll">
+                <div class="card-title-flex">
+                    <i data-lucide="calendar" class="card-icon"></i>
+                    <h3>7-Day Outlook</h3>
+                </div>
+
+                <div class="daily-list-container" id="daily-list-container">
+                    <!-- Daily forecast rows populated dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- CARD 5 & 6 & 7 & 8: HIGHLIGHT METRICS GRID -->
+            <div class="highlights-grid-wrapper">
+
+                <!-- Wind Gauge Card -->
+                <div class="glass-card metric-card reveal-on-scroll">
+                    <div class="metric-header">
+                        <i data-lucide="wind" class="metric-icon"></i>
+                        <span>Wind Speed & Direction</span>
+                    </div>
+                    <div class="metric-main-val">
+                        <span id="wind-speed-val">--</span> <small id="wind-unit-label">km/h</small>
+                    </div>
+                    <div class="metric-footer-text">
+                        <i data-lucide="compass" class="compass-icon" id="compass-icon"></i>
+                        <span id="wind-direction-text">Direction: --°</span>
+                    </div>
+                </div>
+
+                <!-- Humidity Card -->
+                <div class="glass-card metric-card reveal-on-scroll">
+                    <div class="metric-header">
+                        <i data-lucide="droplet" class="metric-icon"></i>
+                        <span>Relative Humidity</span>
+                    </div>
+                    <div class="metric-main-val">
+                        <span id="humidity-val">--</span> <small>%</small>
+                    </div>
+                    <div class="metric-footer-text">
+                        <span id="dew-point-text">Dew Point: --°</span>
+                    </div>
+                </div>
+
+                <!-- UV Index Card -->
+                <div class="glass-card metric-card reveal-on-scroll">
+                    <div class="metric-header">
+                        <i data-lucide="sun-medium" class="metric-icon"></i>
+                        <span>UV Index</span>
+                    </div>
+                    <div class="metric-main-val">
+                        <span id="uv-index-val">--</span>
+                    </div>
+                    <div class="metric-footer-text">
+                        <span id="uv-risk-level">Risk Level: Low</span>
+                    </div>
+                </div>
+
+                <!-- Air Pressure Card -->
+                <div class="glass-card metric-card reveal-on-scroll">
+                    <div class="metric-header">
+                        <i data-lucide="gauge" class="metric-icon"></i>
+                        <span>Air Pressure</span>
+                    </div>
+                    <div class="metric-main-val">
+                        <span id="pressure-val">--</span> <small>hPa</small>
+                    </div>
+                    <div class="metric-footer-text">
+                        <span id="pressure-state-text">Barometric State</span>
+                    </div>
+                </div>
+
+                <!-- Visibility Card -->
+                <div class="glass-card metric-card reveal-on-scroll">
+                    <div class="metric-header">
+                        <i data-lucide="eye" class="metric-icon"></i>
+                        <span>Visibility</span>
+                    </div>
+                    <div class="metric-main-val">
+                        <span id="visibility-val">--</span> <small>km</small>
+                    </div>
+                    <div class="metric-footer-text">
+                        <span id="visibility-state-text">Clear Horizon</span>
+                    </div>
+                </div>
+
+                <!-- Sunrise & Sunset Card -->
+                <div class="glass-card metric-card reveal-on-scroll">
+                    <div class="metric-header">
+                        <i data-lucide="sun-snow" class="metric-icon"></i>
+                        <span>Sun Cycle</span>
+                    </div>
+                    <div class="sun-cycle-flex">
+                        <div class="sun-item">
+                            <i data-lucide="sunrise"></i>
+                            <div>
+                                <small>Sunrise</small>
+                                <strong id="sunrise-time">--:--</strong>
+                            </div>
+                        </div>
+                        <div class="sun-item">
+                            <i data-lucide="sunset"></i>
+                            <div>
+                                <small>Sunset</small>
+                                <strong id="sunset-time">--:--</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div> <!-- /highlights-grid-wrapper -->
+
+        </div> <!-- /dashboard-grid -->
+    </main>
+
+    <!-- ========================================================================= -->
+    <!-- 6. DEVELOPER DIAGNOSTIC LOG & API ERROR DRAWER/MODAL                      -->
+    <!-- Displays clear explanations, error reasons, root causes, and developer    -->
+    <!-- troubleshooting steps when API calls or network requests fail.            -->
+    <!-- ========================================================================= -->
+    <div class="dev-modal-overlay" id="dev-modal-overlay">
+        <div class="dev-modal-card glass-card">
+            <div class="dev-modal-header">
+                <div class="dev-title-flex">
+                    <i data-lucide="terminal" class="terminal-icon"></i>
+                    <h3>Developer Diagnostic Console</h3>
+                </div>
+                <button class="close-btn" id="close-dev-modal-btn">&times;</button>
+            </div>
+            
+            <div class="dev-modal-body">
+                <div class="dev-status-banner" id="dev-status-banner">
+                    <i data-lucide="check-circle" id="dev-status-icon"></i>
+                    <span id="dev-status-summary">System Status: All APIs operational.</span>
+                </div>
+
+                <div class="dev-log-container">
+                    <h4><i data-lucide="file-text"></i> Real-Time Console Trail & Network Logs:</h4>
+                    <pre id="dev-log-output">Initializing Weather Engine... Ready.</pre>
+                </div>
+
+                <div class="dev-guide-box">
+                    <h4><i data-lucide="help-circle"></i> Troubleshooting & Architecture Guide:</h4>
+                    <ul>
+                        <li><strong>Data Provider:</strong> Open-Meteo REST APIs (Geocoding, Forecast, Air Quality). No secret API key required.</li>
+                        <li><strong>Canvas Animation Engine:</strong> Driven by HTML5 2D Context (`requestAnimationFrame`) rendering weather particles according to live weather codes (WMO standard).</li>
+                        <li><strong>Glassmorphism & Scroll:</strong> Card blur effects use CSS `backdrop-filter: blur(16px)`. Scroll reveal uses native `IntersectionObserver`.</li>
+                        <li><strong>Handling API Errors:</strong> If search or network drops, check console logs above or verify internet connectivity. Open-Meteo returns HTTP 200/400 JSON payloads.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    <!-- ========================================================================= -->
+    <!-- FOOTER CREDITS                                                            -->
+    <!-- ========================================================================= -->
+    <footer class="app-footer">
+        <p>Crafted with <i data-lucide="heart" class="heart-icon"></i> by <strong>SHADOW X</strong> | Powered by AURA Atmospheric Motion Engine</p>
+    </footer>
+
+    <!-- ========================================================================= -->
+    <!-- 7. APPLICATION SCRIPT FILES (Modular JavaScript Architecture)             -->
+    <!-- ========================================================================= -->
+    <!-- 1. Open-Meteo Weather & AQI API Integration Engine -->
+    <script src="js/weatherEngine.js"></script>
+    
+    <!-- 2. Procedural HTML5 Background Motion Graphics Engine -->
+    <script src="js/motionCanvas.js"></script>
+    
+    <!-- 3. Minimalist Smooth Physics Custom Cursor -->
+    <script src="js/customCursor.js"></script>
+    
+    <!-- 4. UI Manager (Scroll Reveal, Prompts, Search Dropdown, Modals) -->
+    <script src="js/uiManager.js"></script>
+    
+    <!-- 5. Main Application Entry Point & Orchestrator -->
+    <script src="js/app.js"></script>
+
+    <!-- Initialize Lucide SVG Icons -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        });
+    </script>
+</body>
+</html>
