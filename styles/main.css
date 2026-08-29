@@ -1,0 +1,1479 @@
+/* ==========================================================================
+   AURA WEATHER — STYLES & GLASSMORPHISM ENGINE
+   Design System: Monochrome Dark/Light Shaders, Frosted Glass, Smooth Motion
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. CSS CUSTOM PROPERTIES (THEME VARIABLES)
+   -------------------------------------------------------------------------- */
+:root {
+    /* Fonts */
+    --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+    /* Transition timings */
+    --transition-fast: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    --transition-smooth: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    --transition-slow: 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* Card Border Radius */
+    --radius-sm: 12px;
+    --radius-md: 18px;
+    --radius-lg: 24px;
+    --radius-full: 9999px;
+}
+
+/* Theme: Dark Shader (Default) */
+body.theme-dark {
+    --bg-primary: #0a0a0c;
+    --bg-secondary: #121216;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.65);
+    --text-muted: rgba(255, 255, 255, 0.4);
+    
+    /* Glassmorphism Surface Shaders */
+    --glass-bg: rgba(20, 20, 26, 0.55);
+    --glass-bg-hover: rgba(30, 30, 38, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-border-hover: rgba(255, 255, 255, 0.25);
+    --glass-blur: blur(20px);
+    --glass-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+
+    /* Navbar Shaders */
+    --nav-bg: rgba(10, 10, 12, 0.65);
+    --nav-border: rgba(255, 255, 255, 0.08);
+
+    /* Accent & Shaders */
+    --accent-color: #ffffff;
+    --accent-inverse: #000000;
+    --gradient-text: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
+    --cursor-color: #ffffff;
+
+    /* AQI Status Colors */
+    --aqi-good: #10b981;
+    --aqi-moderate: #f59e0b;
+    --aqi-unhealthy: #ef4444;
+    --aqi-hazardous: #8b5cf6;
+}
+
+/* Theme: Light Shader */
+body.theme-light {
+    --bg-primary: #f4f4f6;
+    --bg-secondary: #e4e4e7;
+    --text-primary: #09090b;
+    --text-secondary: rgba(9, 9, 11, 0.7);
+    --text-muted: rgba(9, 9, 11, 0.45);
+
+    /* Glassmorphism Surface Shaders */
+    --glass-bg: rgba(255, 255, 255, 0.65);
+    --glass-bg-hover: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --glass-border-hover: rgba(0, 0, 0, 0.18);
+    --glass-blur: blur(20px);
+    --glass-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.06);
+
+    /* Navbar Shaders */
+    --nav-bg: rgba(244, 244, 246, 0.75);
+    --nav-border: rgba(0, 0, 0, 0.06);
+
+    /* Accent & Shaders */
+    --accent-color: #09090b;
+    --accent-inverse: #ffffff;
+    --gradient-text: linear-gradient(135deg, #09090b 0%, #52525b 100%);
+    --cursor-color: #000000;
+
+    /* AQI Status Colors */
+    --aqi-good: #059669;
+    --aqi-moderate: #d97706;
+    --aqi-unhealthy: #dc2626;
+    --aqi-hazardous: #7c3aed;
+}
+
+/* --------------------------------------------------------------------------
+   2. GLOBAL RESET & BASE STYLES
+   -------------------------------------------------------------------------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-family);
+    -webkit-font-smoothing: antialiased;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    transition: background-color var(--transition-smooth), color var(--transition-smooth);
+}
+
+/* Hide default cursor when custom cursor is active (handled by JS on desktop) */
+body.custom-cursor-active {
+    cursor: none;
+}
+body.custom-cursor-active a, 
+body.custom-cursor-active button,
+body.custom-cursor-active input {
+    cursor: none;
+}
+
+/* --------------------------------------------------------------------------
+   3. CUSTOM DOT CURSOR
+   -------------------------------------------------------------------------- */
+.custom-cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 8px;
+    height: 8px;
+    background-color: var(--cursor-color);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s ease-out, background-color var(--transition-smooth), width 0.2s, height 0.2s;
+}
+
+.custom-cursor-follower {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 34px;
+    height: 34px;
+    border: 1.5px solid var(--cursor-color);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    opacity: 0.45;
+    transition: transform 0.15s ease-out, opacity 0.2s, width 0.2s, height 0.2s, border-color var(--transition-smooth);
+}
+
+/* Hover effect on interactive elements */
+.custom-cursor-hover .custom-cursor {
+    width: 14px;
+    height: 14px;
+}
+.custom-cursor-hover .custom-cursor-follower {
+    width: 48px;
+    height: 48px;
+    opacity: 0.8;
+}
+
+/* --------------------------------------------------------------------------
+   4. CANVAS & BACKGROUND SHADERS
+   -------------------------------------------------------------------------- */
+.weather-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: -2;
+}
+
+.shader-background-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: -1;
+    background: radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.03) 0%, transparent 60%);
+    transition: opacity var(--transition-smooth);
+}
+
+/* --------------------------------------------------------------------------
+   5. STICKY BLUR NAVIGATION BAR
+   -------------------------------------------------------------------------- */
+.glass-navbar {
+    position: sticky;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    background: var(--nav-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--nav-border);
+    transition: background var(--transition-smooth), border-color var(--transition-smooth);
+}
+
+.nav-container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+/* Brand Logo */
+.brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.brand-icon {
+    width: 28px;
+    height: 28px;
+    color: var(--text-primary);
+}
+
+.brand-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: var(--text-primary);
+}
+
+.brand-title small {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    display: block;
+    margin-top: -2px;
+}
+
+/* Search Wrapper & Autocomplete */
+.search-wrapper {
+    position: relative;
+    flex: 1;
+    max-width: 480px;
+}
+
+.search-input-box {
+    display: flex;
+    align-items: center;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-full);
+    padding: 6px 14px;
+    transition: all var(--transition-fast);
+}
+
+.search-input-box:focus-within {
+    border-color: var(--glass-border-hover);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+
+.search-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--text-muted);
+    margin-right: 10px;
+}
+
+.search-input-box input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+.search-input-box input::placeholder {
+    color: var(--text-muted);
+}
+
+.location-btn {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: 50%;
+    transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.location-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Search Dropdown */
+.search-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--glass-shadow);
+    overflow: hidden;
+    z-index: 105;
+    display: none;
+}
+
+.search-dropdown.active {
+    display: block;
+}
+
+.dropdown-item {
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    border-bottom: 1px solid var(--glass-border);
+    transition: background var(--transition-fast);
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background: var(--glass-bg-hover);
+}
+
+.dropdown-item-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.dropdown-item-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Nav Actions */
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pill-btn, .icon-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.pill-btn {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    gap: 4px;
+    user-select: none;
+}
+
+.icon-btn {
+    width: 40px;
+    height: 40px;
+}
+
+.pill-btn:hover, .icon-btn:hover {
+    background: var(--glass-bg-hover);
+    border-color: var(--glass-border-hover);
+    transform: translateY(-1px);
+}
+
+.active-unit {
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.unit-divider {
+    color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   6. LANDING PAGE HERO SECTION & PAGE TRANSITION ENGINE
+   -------------------------------------------------------------------------- */
+.landing-section {
+    min-height: calc(100vh - 80px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s ease;
+}
+
+.landing-section.fade-out {
+    opacity: 0;
+    transform: scale(0.95) translateY(-30px);
+    filter: blur(8px);
+    pointer-events: none;
+}
+
+.landing-section.hidden {
+    display: none !important;
+}
+
+/* Primary CTA Button */
+.landing-cta-box {
+    margin: 6px 0;
+}
+
+.cta-enter-btn {
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    border: none;
+    outline: none;
+    padding: 16px 36px;
+    border-radius: var(--radius-full);
+    font-size: 1.05rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    transition: all var(--transition-smooth);
+    animation: ctaPulse 3s infinite ease-in-out;
+}
+
+.cta-enter-btn:hover {
+    transform: translateY(-4px) scale(1.04);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.cta-enter-btn i {
+    width: 22px;
+    height: 22px;
+}
+
+@keyframes ctaPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.2); }
+    50% { box-shadow: 0 0 0 14px rgba(255, 255, 255, 0); }
+}
+
+.landing-content {
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+}
+
+.landing-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    backdrop-filter: var(--glass-blur);
+}
+
+.landing-title {
+    font-size: 3.8rem;
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -1.5px;
+}
+
+.gradient-text {
+    background: var(--gradient-text);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.landing-subtitle {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    max-width: 640px;
+    line-height: 1.6;
+}
+
+/* Prompt Pills */
+.prompt-pills-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.prompt-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-right: 6px;
+}
+
+.prompt-pill {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    padding: 8px 18px;
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 500;
+    backdrop-filter: var(--glass-blur);
+    transition: all var(--transition-fast);
+}
+
+.prompt-pill:hover {
+    background: var(--glass-bg-hover);
+    border-color: var(--glass-border-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--glass-shadow);
+}
+
+/* Scenario Prompt Cards Grid */
+.scenario-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.scenario-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 14px;
+    position: relative;
+    transition: all var(--transition-smooth);
+    cursor: pointer;
+}
+
+.scenario-card:hover {
+    background: var(--glass-bg-hover);
+    border-color: var(--glass-border-hover);
+    transform: translateY(-4px);
+    box-shadow: var(--glass-shadow);
+}
+
+.scenario-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+}
+
+.scenario-info h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.scenario-info p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.scenario-arrow {
+    width: 18px;
+    height: 18px;
+    color: var(--text-muted);
+    align-self: flex-end;
+    margin-top: auto;
+    transition: transform var(--transition-fast), color var(--transition-fast);
+}
+
+.scenario-card:hover .scenario-arrow {
+    transform: translateX(4px);
+    color: var(--text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   7. MAIN WEATHER DASHBOARD GRID SECTION
+   -------------------------------------------------------------------------- */
+.dashboard-section {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 40px 24px 80px 24px;
+    position: relative;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dashboard-section.hidden {
+    display: none !important;
+    opacity: 0;
+    transform: translateY(40px);
+}
+
+.dashboard-section.reveal-animation {
+    animation: dashboardReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes dashboardReveal {
+    from {
+        opacity: 0;
+        transform: translateY(40px) scale(0.98);
+        filter: blur(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 24px;
+}
+
+/* Glass Card Component */
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: var(--glass-shadow);
+    transition: background var(--transition-smooth), border-color var(--transition-smooth), transform var(--transition-smooth);
+}
+
+.glass-card:hover {
+    border-color: var(--glass-border-hover);
+}
+
+/* Scroll Reveal Animations */
+.reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-on-scroll.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* --------------------------------------------------------------------------
+   7.1 HERO WEATHER CARD
+   -------------------------------------------------------------------------- */
+.hero-weather-card {
+    grid-column: span 7;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 340px;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.location-details h2 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.1;
+}
+
+.country-subtext {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.time-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.condition-badge {
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.hero-temperature-flex {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 20px 0;
+}
+
+.main-temp-display {
+    display: flex;
+    align-items: flex-start;
+}
+
+#main-temperature {
+    font-size: 5.5rem;
+    font-weight: 900;
+    line-height: 0.9;
+    letter-spacing: -2px;
+}
+
+.temp-unit-symbol {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    margin-left: 4px;
+}
+
+.hero-icon-container {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.animated-weather-icon {
+    width: 80px;
+    height: 80px;
+    color: var(--text-primary);
+    animation: pulseGlow 4s infinite ease-in-out;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.9; }
+    50% { transform: scale(1.08) rotate(5deg); opacity: 1; }
+}
+
+.hero-card-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.04);
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+}
+
+.stat-pill i {
+    width: 16px;
+    height: 16px;
+    color: var(--text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   7.2 REAL-TIME AQI CARD
+   -------------------------------------------------------------------------- */
+.aqi-card {
+    grid-column: span 5;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.card-title-flex {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-icon {
+    width: 22px;
+    height: 22px;
+    color: var(--text-primary);
+}
+
+.card-title-flex h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.sub-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-left: auto;
+}
+
+.aqi-status-pill {
+    margin-left: auto;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--aqi-good);
+}
+
+.aqi-meter-wrapper {
+    margin: 16px 0;
+}
+
+.aqi-score-display {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+
+}
+
+#aqi-number {
+    font-size: 3.2rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.aqi-score-display small {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.aqi-bar-container {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin: 12px 0;
+}
+
+.aqi-bar-fill {
+    height: 100%;
+    width: 20%;
+    background: var(--aqi-good);
+    border-radius: var(--radius-full);
+    transition: width var(--transition-smooth), background var(--transition-smooth);
+}
+
+.aqi-description {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.pollutant-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.pollutant-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 8px 4px;
+    border-radius: var(--radius-sm);
+}
+
+.pollutant-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.pollutant-value {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   7.3 24-HOUR HOURLY TIMELINE
+   -------------------------------------------------------------------------- */
+.full-width-card {
+    grid-column: span 12;
+}
+
+.hourly-scroll-container {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding: 16px 4px 8px 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--glass-border) transparent;
+}
+
+.hourly-scroll-container::-webkit-scrollbar {
+    height: 6px;
+}
+
+.hourly-scroll-container::-webkit-scrollbar-thumb {
+    background: var(--glass-border);
+    border-radius: var(--radius-full);
+}
+
+.hourly-item-card {
+    flex: 0 0 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 14px 10px;
+    gap: 10px;
+    transition: all var(--transition-fast);
+}
+
+.hourly-item-card:hover {
+    background: var(--glass-bg-hover);
+    border-color: var(--glass-border-hover);
+    transform: translateY(-3px);
+}
+
+.hourly-time {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.hourly-icon {
+    width: 28px;
+    height: 28px;
+    color: var(--text-primary);
+}
+
+.hourly-temp {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.hourly-pop {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   7.4 7-DAY FORECAST LIST
+   -------------------------------------------------------------------------- */
+.daily-card {
+    grid-column: span 5;
+}
+
+.daily-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.daily-row-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    transition: all var(--transition-fast);
+}
+
+.daily-row-item:hover {
+    background: var(--glass-bg-hover);
+    border-color: var(--glass-border);
+}
+
+.daily-day-name {
+    width: 100px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.daily-weather-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.daily-icon {
+    width: 22px;
+    height: 22px;
+    color: var(--text-primary);
+}
+
+.daily-condition-name {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.daily-temps {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.daily-max {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.daily-min {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   7.5 METRICS HIGHLIGHTS GRID
+   -------------------------------------------------------------------------- */
+.highlights-grid-wrapper {
+    grid-column: span 7;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.metric-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 135px;
+}
+
+.metric-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.metric-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--text-primary);
+}
+
+.metric-main-val {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--text-primary);
+    line-height: 1;
+    margin: 8px 0;
+}
+
+.metric-main-val small {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.metric-footer-text {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.compass-icon {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.5s ease;
+}
+
+.sun-cycle-flex {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    margin-top: 10px;
+}
+
+.sun-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sun-item i {
+    width: 26px;
+    height: 26px;
+    color: var(--text-primary);
+}
+
+.sun-item small {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: block;
+}
+
+.sun-item strong {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   8. LOADING OVERLAY SPINNER
+   -------------------------------------------------------------------------- */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--nav-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-fast);
+}
+
+.loading-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.spinner-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.spinner-ring {
+    width: 44px;
+    height: 44px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--text-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   9. DEVELOPER DIAGNOSTIC LOG & ERROR MODAL
+   -------------------------------------------------------------------------- */
+.dev-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-smooth);
+}
+
+.dev-modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.dev-modal-card {
+    width: 100%;
+    max-width: 750px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.dev-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.dev-title-flex {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.terminal-icon {
+    width: 22px;
+    height: 22px;
+    color: var(--text-primary);
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.8rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.close-btn:hover {
+    color: var(--text-primary);
+}
+
+.dev-modal-body {
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+}
+
+.dev-status-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #10b981;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.dev-status-banner.error {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+.dev-log-container {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 14px;
+}
+
+.dev-log-container h4 {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#dev-log-output {
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #34d399;
+    white-space: pre-wrap;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.dev-guide-box {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: var(--radius-md);
+    padding: 16px;
+}
+
+.dev-guide-box h4 {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dev-guide-box ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.dev-guide-box strong {
+    color: var(--text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   10. RESPONSIVE MEDIA QUERIES (PC / TABLET / MOBILE)
+   -------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+    .hero-weather-card {
+        grid-column: span 12;
+    }
+    .aqi-card {
+        grid-column: span 12;
+    }
+    .daily-card {
+        grid-column: span 12;
+    }
+    .highlights-grid-wrapper {
+        grid-column: span 12;
+    }
+}
+
+/* Hide custom dot cursor on touch devices and mobile screen viewports */
+@media (max-width: 900px), (pointer: coarse), (hover: none) {
+    .custom-cursor,
+    .custom-cursor-follower {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+    body.custom-cursor-active,
+    body.custom-cursor-active a,
+    body.custom-cursor-active button,
+    body.custom-cursor-active input {
+        cursor: auto !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .nav-container {
+        padding: 12px 16px;
+        flex-wrap: wrap;
+    }
+    .search-wrapper {
+        order: 3;
+        width: 100%;
+        max-width: 100%;
+        margin-top: 6px;
+    }
+    .landing-title {
+        font-size: 2.5rem;
+    }
+    .landing-subtitle {
+        font-size: 0.95rem;
+    }
+    .highlights-grid-wrapper {
+        grid-template-columns: 1fr;
+    }
+    .hero-temperature-flex {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    #main-temperature {
+        font-size: 4rem;
+    }
+    .pollutant-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .brand-title small {
+        display: none;
+    }
+    .nav-actions {
+        gap: 6px;
+    }
+    .pill-btn {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+    .landing-title {
+        font-size: 2rem;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   11. FOOTER CREDITS
+   -------------------------------------------------------------------------- */
+.app-footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--glass-border);
+    margin-top: 40px;
+    background: var(--nav-bg);
+    backdrop-filter: var(--glass-blur);
+    position: relative;
+    z-index: 10;
+}
+
+.app-footer strong {
+    color: var(--text-primary);
+}
+
+.heart-icon {
+    width: 14px;
+    height: 14px;
+    color: #ef4444;
+    vertical-align: middle;
+    fill: #ef4444;
+}
